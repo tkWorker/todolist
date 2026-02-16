@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simple TODO</title>
+
+<style>
+body{
+ font-family: sans-serif;
+ background:#f4f4f4;
+ margin:0;
+ padding:20px;
+}
+h2{margin-top:0;}
+#inputArea{
+ display:flex;
+ gap:8px;
+}
+input{
+ flex:1;
+ padding:8px;
+ font-size:16px;
+}
+button{
+ padding:8px 12px;
+}
+ul{
+ list-style:none;
+ padding:0;
+ margin-top:20px;
+}
+li{
+ background:white;
+ padding:10px;
+ margin-bottom:8px;
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ border-radius:6px;
+}
+.done{
+ text-decoration: line-through;
+ color:gray;
+}
+</style>
+</head>
+<body>
+
+<h2>TODOリスト</h2>
+
+<div id="inputArea">
+<input id="todoInput" placeholder="やることを書く">
+<button onclick="addTodo()">追加</button>
+</div>
+
+<ul id="todoList"></ul>
+
+<script>
+let todos = JSON.parse(localStorage.getItem("todos")) || [];
+
+/* ▼ 今日の日付を保存する */
+function save(){
+ localStorage.setItem("todos", JSON.stringify(todos));
+ localStorage.setItem("lastResetDate", new Date().toDateString());
+}
+
+/* ▼ 次の日になっていたらチェックを外す */
+function checkDailyReset(){
+ const last = localStorage.getItem("lastResetDate");
+ const today = new Date().toDateString();
+
+ if(last !== today){
+   todos.forEach(t => t.done = false);
+   save();
+ }
+}
+
+function render(){
+ const list = document.getElementById("todoList");
+ list.innerHTML="";
+ todos.forEach((todo,index)=>{
+  const li=document.createElement("li");
+
+  const span=document.createElement("span");
+  span.textContent=todo.text;
+  if(todo.done) span.classList.add("done");
+
+  const checkbox=document.createElement("input");
+  checkbox.type="checkbox";
+  checkbox.checked=todo.done;
+  checkbox.onchange=()=>{
+   todo.done=checkbox.checked;
+   save();
+   render();
+  };
+
+  /* ▼ 削除ボタン */
+  const deleteBtn = document.createElement("button");
+  deleteBtn.textContent = "削除";
+  deleteBtn.onclick = () => {
+    todos.splice(index, 1);
+    save();
+    render();
+  };
+
+  li.appendChild(span);
+  li.appendChild(checkbox);
+  li.appendChild(deleteBtn);
+
+  list.appendChild(li);
+ });
+}
+
+function addTodo(){
+ const input=document.getElementById("todoInput");
+ if(input.value.trim()==="") return;
+ todos.push({text:input.value,done:false});
+ input.value="";
+ save();
+ render();
+}
+
+/* ▼ ページ読み込み時に日付チェック */
+checkDailyReset();
+render();
+</script>
+
+</body>
+</html>
